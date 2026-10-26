@@ -1,6 +1,6 @@
-const TXT_EXTENSION = "txt";
+const PROMPT_EXTENSIONS = new Set(["txt", "json"]);
 
-function txtFileChecker(fileName: string): boolean {
+function promptFileChecker(fileName: string): boolean {
   try {
     if (!fileName) {
       throw new Error("Filename cannot be empty");
@@ -13,7 +13,7 @@ function txtFileChecker(fileName: string): boolean {
   }
 
   const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
-  return extension === TXT_EXTENSION;
+  return PROMPT_EXTENSIONS.has(extension);
 }
 
-export default txtFileChecker;
+export default promptFileChecker;

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import uploadLogo from "../../assets/upload.svg";
-import txtFileChecker from "../utils/ExtensionHelper";
+import promptFileChecker from "../utils/ExtensionHelper";
 
 type PromptUploadProps = {
   file: File | null;
@@ -16,10 +16,11 @@ function PromptUpload({ file, promptCount, onFileChange }: PromptUploadProps) {
   ) => {
     const selectedFile = event.target.files?.[0] ?? null;
     const fileName = selectedFile?.name ?? "";
-    if (!txtFileChecker(fileName)) {
+    if (!promptFileChecker(fileName)) {
       event.target.value = "";
       return;
     }
+    event.target.value = "";
     onFileChange(selectedFile);
   };
 
@@ -49,7 +50,7 @@ function PromptUpload({ file, promptCount, onFileChange }: PromptUploadProps) {
         <input
           ref={inputRef}
           type="file"
-          accept=".txt,text/plain"
+          accept=".txt,.json,text/plain,application/json"
           hidden
           onChange={handleFileChange}
         />
@@ -63,7 +64,7 @@ function PromptUpload({ file, promptCount, onFileChange }: PromptUploadProps) {
         type="text"
         readOnly
         value={file?.name ?? ""}
-        placeholder="Choose a .txt file"
+        placeholder="Choose a .txt or .json file"
         className="min-w-0 flex-1 truncate rounded-md border border-[var(--line-strong)] bg-[var(--surface-soft)] px-2 py-1.5 text-xs text-[var(--ink)] placeholder:text-[var(--muted)]"
       />
 
@@ -71,7 +72,7 @@ function PromptUpload({ file, promptCount, onFileChange }: PromptUploadProps) {
       <input
         ref={inputRef}
         type="file"
-        accept=".txt,text/plain"
+        accept=".txt,.json,text/plain,application/json"
         hidden
         onChange={handleFileChange}
       />
@@ -80,7 +81,7 @@ function PromptUpload({ file, promptCount, onFileChange }: PromptUploadProps) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        aria-label="Choose a .txt file"
+        aria-label="Choose a .txt or .json file"
         className="shrink-0 cursor-pointer rounded-lg border border-[var(--line)] bg-[var(--surface-solid)] p-1.5 transition hover:bg-[var(--accent-soft)]"
       >
         <img src={uploadLogo} alt="" className="h-5 w-5" />

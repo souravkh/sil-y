@@ -9,6 +9,7 @@ import {
 } from "./features/utils/TxtFileReader";
 import TestRunner from "./features/test-runner/TextRunner";
 import { exportPrompts } from "./features/utils/exportService";
+import SavedPrompts from "./features/saved-prompts/SavedPrompts";
 
 function AppShell() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -28,6 +29,7 @@ function AppShell() {
   }, [theme]);
 
   const [promptFile, setPromptFile] = useState<File | null>(null);
+  const [promptSource, setPromptSource] = useState<"file" | "saved">("file");
   const [prompts, setPrompts] = useState<PromptRecord>({});
   const [isExporting, setIsExporting] = useState(false);
   const [isPromptListOpen, setIsPromptListOpen] = useState(true);
@@ -44,37 +46,36 @@ function AppShell() {
     }
   };
 
-  async function handleFileChange(file: File | null) {
-    if (!file) return;
-
-    const promptRecord = await readPromptsFile(file);
-
-    setPrompts(promptRecord);
-    if (promptRecord && typeof promptRecord === "object") {
-      const keys = Object.keys(promptRecord);
-      if (keys.length > 0) {
-        const firstPrompt = keys[0];
-        updateCurrentPrompt(firstPrompt);
-      }
-    }
-    console.log(promptRecord);
-  }
-
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const updateCurrentPrompt = (newPrompt: string): void => {
     if (newPrompt) setCurrentPrompt(newPrompt);
   };
 
-  const handlePromptFileChange = (file: File | null) => {
-    setPromptFile(file);
-    if (file) {
-      console.log("Selected file:", file.name);
-      console.log("File object:", file);
-      handleFileChange(file);
-    } else {
+  const handlePromptFileChange = async (file: File | null) => {
+    if (!file) {
+      setPromptFile(null);
       setPrompts({});
       setCurrentPrompt("");
+      return;
     }
+
+    try {
+      const promptRecord = await readPromptsFile(file);
+      setPromptFile(file);
+      setPrompts(promptRecord);
+      const firstPrompt = Object.keys(promptRecord)[0];
+      setCurrentPrompt(firstPrompt ?? "");
+    } catch (error) {
+      console.error("Failed to load prompts:", error);
+      alert(error instanceof Error ? error.message : "Failed to load prompts.");
+    }
+  };
+
+  const handleUsePrompts = (newPrompts: string[]) => {
+    const promptsToUse = [...new Set(newPrompts.map((prompt) => prompt.trim()).filter(Boolean))];
+    setPromptFile(null);
+    setPrompts(Object.fromEntries(promptsToUse.map((prompt) => [prompt, ""])));
+    setCurrentPrompt(promptsToUse[0] ?? "");
   };
 
   const updateCurrentPromptDuration = (duration: string): void => {
@@ -106,14 +107,40 @@ function AppShell() {
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-        {promptCount === 0 ? (
-          <section className="shrink-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-glass)] backdrop-blur-md">
+        <section className="shrink-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-glass)] backdrop-blur-md">
+          <div className="mb-2 grid grid-cols-2 gap-1 rounded-lg bg-[var(--surface-soft)] p-1" role="group" aria-label="Choose prompt source">
+            <button
+              type="button"
+              onClick={() => setPromptSource("file")}
+              aria-pressed={promptSource === "file"}
+              className={`rounded-md px-3 py-2 text-xs font-semibold transition ${promptSource === "file" ? "bg-[var(--surface-solid)] text-[var(--accent)] shadow-sm" : "text-[var(--muted)] hover:bg-[var(--accent-soft)]"}`}
+            >
+              Upload file
+            </button>
+            <button
+              type="button"
+              onClick={() => setPromptSource("saved")}
+              aria-pressed={promptSource === "saved"}
+              className={`rounded-md px-3 py-2 text-xs font-semibold transition ${promptSource === "saved" ? "bg-[var(--surface-solid)] text-[var(--accent)] shadow-sm" : "text-[var(--muted)] hover:bg-[var(--accent-soft)]"}`}
+            >
+              Saved scenarios
+            </button>
+          </div>
+          {promptSource === "file" ? (
             <PromptManagement
               file={promptFile}
               promptCount={promptCount}
               onFileChange={handlePromptFileChange}
             />
-          </section>
+          ) : (
+            <SavedPrompts onUsePrompts={handleUsePrompts} />
+          )}
+        </section>
+
+        {promptCount === 0 ? (
+          <p className="px-1 text-xs text-[var(--muted)]">
+            Choose a source above and load prompts to start.
+          </p>
         ) : (
           <>
             <section className="shrink-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-glass)] backdrop-blur-md">
@@ -123,14 +150,6 @@ function AppShell() {
                 currentIndex={currentPromptIndex + 1}
                 total={promptCount}
                 onSaving={updateCurrentPromptDuration}
-              />
-            </section>
-
-            <section className="shrink-0 rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] px-3 py-2 text-xs text-[var(--muted)] backdrop-blur-md">
-              <PromptManagement
-                file={promptFile}
-                promptCount={promptCount}
-                onFileChange={handlePromptFileChange}
               />
             </section>
 

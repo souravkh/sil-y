@@ -1,0 +1,12 @@
+{
+    "Scenarios-prompts":{
+        "Scenario C#":[
+            "Explain class vs structs",
+            "What is OOPs explain with usecases relavant to c# programming"
+        ],
+        "Scenario WPF":[
+            "What is WPF",
+            "Why there is need to use MVVM with WPF."
+        ]
+    }
+}

@@ -76,6 +76,15 @@
     font: inherit;
   }
 
+  :root:has(.app-shell[data-theme="dark"]) select {
+    color-scheme: dark;
+  }
+
+  :root:has(.app-shell[data-theme="dark"]) select option {
+    color: var(--ink);
+    background-color: #1b2436;
+  }
+
   button,
   a {
     -webkit-tap-highlight-color: transparent;
